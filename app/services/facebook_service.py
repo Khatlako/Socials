@@ -8,7 +8,7 @@ class FacebookService:
     """Handle Facebook OAuth and Graph API operations"""
     
     FACEBOOK_AUTH_URL = 'https://www.facebook.com/v18.0/dialog/oauth'
-    FACEBOOK_TOKEN_URL = 'https://graph.instagram.com/v18.0/oauth/access_token'
+    FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v18.0/oauth/access_token'
     FACEBOOK_GRAPH_API = 'https://graph.facebook.com/v18.0'
     
     def __init__(self):

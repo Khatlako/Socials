@@ -19,14 +19,14 @@ class User(UserMixin, db.Model):
     token_expires_at = db.Column(db.DateTime)
     
     # Page access token (long-lived - never expires)
-    page_access_token = db.Column(db.Text)  # Long-lived page token for posting
+    page_access_token = db.Column(db.Text)
     
     # Business account info
-    facebook_business_accounts = db.Column(db.JSON, default=list)  # List of business accounts
-    facebook_pages = db.Column(db.JSON, default=list)  # List of available pages with tokens
-    selected_business_account_id = db.Column(db.String(255))  # Currently selected account
-    selected_page_id = db.Column(db.String(255))  # Currently selected page
-    selected_page_name = db.Column(db.String(255))  # Page name for display
+    facebook_business_accounts = db.Column(db.JSON, default=list)
+    facebook_pages = db.Column(db.JSON, default=list)
+    selected_business_account_id = db.Column(db.String(255))
+    selected_page_id = db.Column(db.String(255))
+    selected_page_name = db.Column(db.String(255))
     
     # User settings
     timezone = db.Column(db.String(50), default='UTC')
@@ -34,12 +34,15 @@ class User(UserMixin, db.Model):
     ai_enabled = db.Column(db.Boolean, default=True)
     
     # Subscription & Billing
-    plan_id = db.Column(db.Integer, db.ForeignKey('plans.id'))  # Current plan
-    ecocash_phone_number = db.Column(db.String(20))  # Primary Ecocash phone for subscriptions
-    current_subscription_id = db.Column(db.Integer, db.ForeignKey('subscriptions.id'))  # Active subscription
-    subscription_status = db.Column(db.String(50), default='none')  # none, trialing, active, past_due, canceled
-    subscription_ends_at = db.Column(db.DateTime)  # When current subscription ends
-    billing_email = db.Column(db.String(255))  # May differ from login email
+    plan_id = db.Column(db.Integer, db.ForeignKey('plans.id', name='fk_users_plan_id'))
+    ecocash_phone_number = db.Column(db.String(20))
+    current_subscription_id = db.Column(
+        db.Integer, 
+        db.ForeignKey('subscriptions.id', name='fk_users_subscription_id')
+    )
+    subscription_status = db.Column(db.String(50), default='none')
+    subscription_ends_at = db.Column(db.DateTime)
+    billing_email = db.Column(db.String(255))
     
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -47,11 +50,21 @@ class User(UserMixin, db.Model):
     last_login = db.Column(db.DateTime)
     
     # Relationships
-    portfolios = db.relationship('Portfolio', backref='owner', lazy='dynamic', cascade='all, delete-orphan')
-    media = db.relationship('Media', backref='owner', lazy='dynamic', cascade='all, delete-orphan')
-    posts = db.relationship('Post', backref='creator', lazy='dynamic', cascade='all, delete-orphan', foreign_keys='Post.user_id')
-    scheduled_posts = db.relationship('ScheduledPost', backref='user', lazy='dynamic', cascade='all, delete-orphan')
-    analytics = db.relationship('PostAnalytics', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    portfolios = db.relationship(
+        'Portfolio', backref='owner', lazy='dynamic', cascade='all, delete-orphan'
+    )
+    media = db.relationship(
+        'Media', backref='owner', lazy='dynamic', cascade='all, delete-orphan'
+    )
+    posts = db.relationship(
+        'Post', backref='creator', lazy='dynamic', cascade='all, delete-orphan', foreign_keys='Post.user_id'
+    )
+    scheduled_posts = db.relationship(
+        'ScheduledPost', backref='user', lazy='dynamic', cascade='all, delete-orphan'
+    )
+    analytics = db.relationship(
+        'PostAnalytics', backref='user', lazy='dynamic', cascade='all, delete-orphan'
+    )
     
     # Subscription relationships
     plan = db.relationship('Plan', backref='users')
@@ -61,37 +74,30 @@ class User(UserMixin, db.Model):
         return f'<User {self.email}>'
     
     def is_token_expired(self):
-        """Check if access token is expired"""
         if self.token_expires_at:
             return datetime.utcnow() >= self.token_expires_at
         return False
     
     def get_id(self):
-        """Override for Flask-Login"""
         return str(self.id)
     
     def get_current_plan(self):
-        """Get user's current plan (default to Free if none)"""
         if self.current_subscription and self.current_subscription.is_active():
             return self.current_subscription.plan
-        # Return Free plan
         from app.models.plan import Plan
         return Plan.query.filter_by(name='free').first()
     
     def has_feature(self, feature_name):
-        """Check if user's current plan has a feature"""
         plan = self.get_current_plan()
         if plan:
             return plan.get_feature(feature_name)
         return None
     
     def is_on_free_plan(self):
-        """Check if user is on free plan"""
         plan = self.get_current_plan()
         return plan and plan.name == 'free'
     
     def is_paid_subscriber(self):
-        """Check if user has active paid subscription"""
         if self.current_subscription:
             return self.current_subscription.is_active() and self.current_subscription.plan.name != 'free'
         return False

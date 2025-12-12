@@ -1,11 +1,13 @@
 from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
+from flask_migrate import Migrate
 import os
 from config import config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
+migrate = Migrate()
 
 def create_app(config_name='default'):
     """Application factory"""
@@ -16,6 +18,7 @@ def create_app(config_name='default'):
     
     # Initialize extensions
     db.init_app(app)
+    migrate.init_app(app, db)  # <-- IMPORTANT
     login_manager.init_app(app)
     
     login_manager.login_view = 'auth.login'
@@ -25,7 +28,6 @@ def create_app(config_name='default'):
     # Root route
     @app.route('/')
     def root():
-        """Root route - redirect to home or dashboard"""
         if current_user.is_authenticated:
             return redirect(url_for('dashboard.index'))
         return redirect(url_for('auth.index'))
@@ -49,8 +51,8 @@ def create_app(config_name='default'):
     app.register_blueprint(api_bp)
     app.register_blueprint(billing_bp)
     
-    # Create tables
-    with app.app_context():
-        db.create_all()
+    # ❌ REMOVE THIS — it prevents migrations
+    # with app.app_context():
+    #     db.create_all()
     
     return app

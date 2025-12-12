@@ -17,7 +17,7 @@ class Config:
     # Facebook OAuth
     FACEBOOK_APP_ID = os.environ.get('FACEBOOK_APP_ID')
     FACEBOOK_APP_SECRET = os.environ.get('FACEBOOK_APP_SECRET')
-    FACEBOOK_REDIRECT_URI = os.environ.get('FACEBOOK_REDIRECT_URI', 'http://localhost:5000/auth/facebook/callback')
+    FACEBOOK_REDIRECT_URI = os.environ.get('FACEBOOK_REDIRECT_URI', '' 'https://fictional-succotash-7664rj5wjrj2xj65-5000.app.github.dev/auth/facebook/callback')
     
     # Database
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///socials.db'
