@@ -1,11 +1,9 @@
 import requests
 from requests_oauthlib import OAuth2Session
-import json
-from datetime import datetime, timedelta
 from flask import current_app
 
 class FacebookService:
-    """Handle Facebook OAuth and Graph API operations"""
+    """Handle Facebook OAuth and Graph API operations including long-lived page tokens"""
     
     FACEBOOK_AUTH_URL = 'https://www.facebook.com/v18.0/dialog/oauth'
     FACEBOOK_TOKEN_URL = 'https://graph.facebook.com/v18.0/oauth/access_token'
@@ -81,8 +79,7 @@ class FacebookService:
                 }
             )
             response.raise_for_status()
-            pages = response.json().get('data', [])
-            return pages
+            return response.json().get('data', [])
         except requests.exceptions.RequestException as e:
             raise Exception(f'Failed to get user pages: {str(e)}')
     
@@ -101,33 +98,53 @@ class FacebookService:
         except requests.exceptions.RequestException as e:
             raise Exception(f'Failed to get business accounts: {str(e)}')
     
-    def get_page_access_token(self, page_id, access_token):
+    def exchange_for_long_lived_user_token(self, short_lived_token: str) -> str:
         """
-        Get page access token for a specific page (long-lived).
-        This is the critical method for long-term access.
+        Exchange a short-lived user access token for a long-lived user access token.
         """
+        url = f"{self.FACEBOOK_GRAPH_API}/oauth/access_token"
+        params = {
+            "grant_type": "fb_exchange_token",
+            "client_id": current_app.config['FACEBOOK_APP_ID'],
+            "client_secret": current_app.config['FACEBOOK_APP_SECRET'],
+            "fb_exchange_token": short_lived_token
+        }
         try:
-            # The page access token is returned with /me/accounts
-            # So we fetch it directly from there
+            resp = requests.get(url, params=params)
+            resp.raise_for_status()
+            return resp.json().get("access_token")
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Failed to get long-lived user token: {str(e)}")
+    
+    def get_long_lived_page_access_token(self, page_id: str, short_lived_user_token: str) -> str:
+        """
+        Returns a long-lived page access token for the given page_id.
+        Automatically exchanges user token to long-lived first.
+        """
+        # Step 1: Exchange user token for long-lived token
+        long_lived_user_token = self.exchange_for_long_lived_user_token(short_lived_user_token)
+
+        # Step 2: Call /me/accounts to get page token
+        try:
             response = requests.get(
-                f'{self.FACEBOOK_GRAPH_API}/me/accounts',
+                f"{self.FACEBOOK_GRAPH_API}/me/accounts",
                 params={
-                    'fields': 'id,name,access_token',
-                    'access_token': access_token,
-                    'limit': 100
+                    "fields": "id,name,access_token",
+                    "access_token": long_lived_user_token,
+                    "limit": 100
                 }
             )
             response.raise_for_status()
-            pages = response.json().get('data', [])
-            
-            # Find the page with matching ID
+            pages = response.json().get("data", [])
+
+            # Find the requested page
             for page in pages:
-                if page.get('id') == page_id:
-                    return page.get('access_token')
-            
-            raise Exception(f'Page {page_id} not found in user accounts')
+                if page.get("id") == page_id:
+                    return page.get("access_token")
+
+            raise Exception(f"Page {page_id} not found in user accounts")
         except requests.exceptions.RequestException as e:
-            raise Exception(f'Failed to get page access token: {str(e)}')
+            raise Exception(f"Failed to get page access token: {str(e)}")
     
     def get_pages(self, business_account_id, access_token):
         """Get pages for a business account"""
@@ -145,55 +162,35 @@ class FacebookService:
             raise Exception(f'Failed to get pages: {str(e)}')
     
     def publish_post(self, page_id, message, page_access_token, image_url=None):
-        """
-        Publish a post to Facebook page using PAGE ACCESS TOKEN (long-lived).
-        This token never expires and is specific to the page.
-        """
+        """Publish a post to Facebook page using PAGE ACCESS TOKEN (long-lived)."""
         try:
-            data = {
-                'message': message,
-                'access_token': page_access_token
-            }
-            
+            data = {'message': message, 'access_token': page_access_token}
             if image_url:
                 data['url'] = image_url
-            
-            response = requests.post(
-                f'{self.FACEBOOK_GRAPH_API}/{page_id}/feed',
-                data=data
-            )
+            response = requests.post(f'{self.FACEBOOK_GRAPH_API}/{page_id}/feed', data=data)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
             raise Exception(f'Failed to publish post: {str(e)}')
     
     def schedule_post(self, page_id, message, scheduled_time, page_access_token, image_url=None):
-        """
-        Schedule a post for future publishing using PAGE ACCESS TOKEN (long-lived).
-        """
+        """Schedule a post for future publishing using PAGE ACCESS TOKEN (long-lived)."""
         try:
             data = {
                 'message': message,
                 'scheduled_publish_time': int(scheduled_time.timestamp()),
                 'access_token': page_access_token
             }
-            
             if image_url:
                 data['url'] = image_url
-            
-            response = requests.post(
-                f'{self.FACEBOOK_GRAPH_API}/{page_id}/feed',
-                data=data
-            )
+            response = requests.post(f'{self.FACEBOOK_GRAPH_API}/{page_id}/feed', data=data)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
             raise Exception(f'Failed to schedule post: {str(e)}')
     
     def get_post_analytics(self, post_id, page_access_token):
-        """
-        Get analytics for a posted item using PAGE ACCESS TOKEN.
-        """
+        """Get analytics for a posted item using PAGE ACCESS TOKEN."""
         try:
             response = requests.get(
                 f'{self.FACEBOOK_GRAPH_API}/{post_id}',
@@ -207,4 +204,6 @@ class FacebookService:
         except requests.exceptions.RequestException as e:
             raise Exception(f'Failed to get post analytics: {str(e)}')
 
+
+# Create a singleton instance
 facebook_service = FacebookService()
