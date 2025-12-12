@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Media - Socials{% endblock %}
+
+{% block content %}
+<div class="media-view-container p-4">
+    <a href="{{ url_for('media.index') }}" class="btn btn-outline-primary mb-4">← Back to Library</a>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body p-0">
+                    {% if media.media_type == 'image' %}
+                    <img src="{{ media.file_path }}" class="img-fluid rounded-top" alt="{{ media.filename }}">
+                    {% else %}
+                    <video controls class="w-100 rounded-top" style="max-height: 500px;">
+                        <source src="{{ media.file_path }}">
+                        Your browser does not support the video tag.
+                    </video>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">Media Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="detail-row">
+                        <span>Filename:</span>
+                        <strong>{{ media.filename }}</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Type:</span>
+                        <strong>{{ media.media_type.title() }}</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Size:</span>
+                        <strong>{{ (media.file_size / 1024 / 1024)|round(2) }} MB</strong>
+                    </div>
+                    {% if media.width and media.height %}
+                    <div class="detail-row">
+                        <span>Dimensions:</span>
+                        <strong>{{ media.width }}x{{ media.height }}px</strong>
+                    </div>
+                    {% endif %}
+                    <div class="detail-row">
+                        <span>Uploaded:</span>
+                        <strong>{{ media.created_at.strftime('%Y-%m-%d %H:%M') }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Title</h6>
+                        <p>{{ media.title or media.filename }}</p>
+                    </div>
+
+                    {% if media.description %}
+                    <div class="mb-3">
+                        <h6>Description</h6>
+                        <p>{{ media.description }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if media.tags %}
+                    <div class="mb-3">
+                        <h6>Tags</h6>
+                        <div>
+                            {% for tag in media.tags.split(',') %}
+                            <span class="badge bg-light text-dark">{{ tag.strip() }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('posts.create') }}" class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-plus"></i> Use in New Post
+                    </a>
+                    <button class="btn btn-outline-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#editModal">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="btn btn-outline-danger w-100" onclick="deleteMedia()">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function deleteMedia() {
+    if (confirm('Delete this media?')) {
+        fetch(`/media/{{ media.id }}/delete`, {method: 'POST'})
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) location.href = '{{ url_for("media.index") }}';
+            });
+    }
+}
+</script>
+
+<style>
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Socials{% endblock %}
+
+{% block content %}
+<div class="dashboard-container p-4">
+    <!-- Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <h6 class="text-muted mb-0">Total Posts</h6>
+                    <h3 class="mb-0">{{ stats.total_posts }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <div class="stat-content">
+                    <h6 class="text-muted mb-0">Pending Review</h6>
+                    <h3 class="mb-0">{{ stats.pending_posts }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h6 class="text-muted mb-0">Posted</h6>
+                    <h3 class="mb-0">{{ stats.posted_posts }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-info">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <h6 class="text-muted mb-0">Scheduled</h6>
+                    <h3 class="mb-0">{{ stats.scheduled_posts }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Engagement Metrics -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">Engagement Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="metric-row">
+                        <span>Likes</span>
+                        <span class="text-primary fw-bold">{{ stats.total_likes }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span>Comments</span>
+                        <span class="text-info fw-bold">{{ stats.total_comments }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span>Shares</span>
+                        <span class="text-success fw-bold">{{ stats.total_shares }}</span>
+                    </div>
+                    <hr>
+                    <a href="{{ url_for('analytics.index') }}" class="btn btn-sm btn-outline-primary">View Full Analytics</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('posts.create') }}" class="btn btn-primary d-block mb-2">
+                        <i class="fas fa-pen"></i> Create New Post
+                    </a>
+                    <a href="{{ url_for('media.index') }}" class="btn btn-outline-primary d-block mb-2">
+                        <i class="fas fa-upload"></i> Upload Media
+                    </a>
+                    <a href="{{ url_for('portfolios.index') }}" class="btn btn-outline-primary d-block mb-2">
+                        <i class="fas fa-file-upload"></i> Upload Portfolio
+                    </a>
+                    <button class="btn btn-outline-primary d-block w-100" data-bs-toggle="modal" data-bs-target="#accountModal">
+                        <i class="fab fa-facebook"></i> Select Facebook Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Engagement Trend -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">Engagement Trend (Last 7 Days)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="engagementChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resources -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">Your Resources</h5>
+                </div>
+                <div class="card-body">
+                    <div class="resource-item">
+                        <i class="fas fa-images"></i>
+                        <span>Media Files</span>
+                        <span class="badge bg-primary">{{ stats.media_count }}</span>
+                    </div>
+                    <div class="resource-item">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>Portfolios</span>
+                        <span class="badge bg-primary">{{ stats.portfolio_count }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+        <!-- Pending Posts -->
+        {% if pending_posts %}
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Pending Review</h5>
+                    <a href="{{ url_for('posts.index', status='pending') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% for post in pending_posts %}
+                    <div class="pending-item">
+                        <p class="mb-2">{{ post.content[:100] }}...</p>
+                        <small class="text-muted">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        <div class="mt-2">
+                            <a href="{{ url_for('posts.view', post_id=post.id) }}" class="btn btn-xs btn-primary">Review</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Upcoming Scheduled -->
+        {% if upcoming_scheduled %}
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">Upcoming Posts</h5>
+                </div>
+                <div class="card-body">
+                    {% for scheduled in upcoming_scheduled %}
+                    <div class="scheduled-item">
+                        <p class="mb-2">{{ scheduled.post.content[:100] }}...</p>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar"></i> {{ scheduled.scheduled_at.strftime('%Y-%m-%d %H:%M') }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Account Selection Modal -->
+<div class="modal fade" id="accountModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Select Facebook Account & Page</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Please log in again to select your Facebook account and page.</p>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login to Select Account</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Engagement chart
+const ctx = document.getElementById('engagementChart');
+if (ctx) {
+    const engagementData = {{ engagement_data|tojson }};
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: engagementData.dates,
+            datasets: [
+                {
+                    label: 'Likes',
+                    data: engagementData.likes,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4
+                },
+                {
+                    label: 'Comments',
+                    data: engagementData.comments,
+                    borderColor: '#f093fb',
+                    backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+</script>
+
+<style>
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+}
+
+.stat-content h6 {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.stat-content h3 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2d3748;
+}
+
+.metric-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.metric-row:last-child {
+    border-bottom: none;
+}
+
+.resource-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+}
+
+.resource-item i {
+    font-size: 20px;
+    color: #667eea;
+}
+
+.pending-item {
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.scheduled-item {
+    padding: 15px;
+    border-left: 4px solid #667eea;
+    background: #f0f4ff;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+</style>
+{% endblock %}

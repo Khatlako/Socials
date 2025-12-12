@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Post - Socials{% endblock %}
+
+{% block content %}
+<div class="edit-post-container p-4">
+    <h2 class="mb-4">Edit Post</h2>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Content</label>
+                            <textarea class="form-control post-textarea" name="content" required>{{ post.content }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Hashtags</label>
+                            <input type="text" class="form-control" name="hashtags" value="{{ post.hashtags or '' }}">
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <a href="{{ url_for('posts.view', post_id=post.id) }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">Edit History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="edit-info">
+                        <p class="mb-2"><strong>Created:</strong> {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        {% if post.last_edited_at %}
+                        <p class="mb-2"><strong>Last Edited:</strong> {{ post.last_edited_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        {% endif %}
+                        <p class="mb-0"><strong>Total Edits:</strong> {{ post.edit_count }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelector('.post-textarea').addEventListener('input', function() {
+    document.getElementById('previewContent').textContent = this.value;
+});
+</script>
+{% endblock %}

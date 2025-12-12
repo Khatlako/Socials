@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Socials{% endblock %}
+
+{% block content %}
+<div class="landing-page">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-lg">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-share-alt text-primary"></i> Socials
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="ms-auto">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login with Facebook</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container-lg">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">
+                        Manage Your Facebook Presence with Intelligence
+                    </h1>
+                    <p class="lead mb-4">
+                        Upload your portfolio, generate AI-powered posts, schedule content, and track engagement all in one place. 
+                        Designed for modern business managers.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">
+                            <i class="fab fa-facebook"></i> Start Free
+                        </a>
+                        <button class="btn btn-outline-primary btn-lg" data-bs-toggle="modal" data-bs-target="#demoModal">
+                            <i class="fas fa-play-circle"></i> Watch Demo
+                        </button>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="feature-graphic">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features py-5">
+        <div class="container-lg">
+            <h2 class="text-center mb-5 fw-bold">Powerful Features for Business Users</h2>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-file-upload"></i>
+                        </div>
+                        <h5>Portfolio Upload</h5>
+                        <p>Upload PDFs, Word docs, and images. Our system automatically extracts content for AI generation.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <h5>AI-Generated Posts</h5>
+                        <p>Generate professional, engaging posts from your portfolio content with a single click.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <h5>Media Library</h5>
+                        <p>Organize and manage all your images and videos in one place. Drag-and-drop into posts.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h5>Post Scheduling</h5>
+                        <p>Schedule posts for the best engagement times. Automatic posting via Facebook API.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h5>Analytics Dashboard</h5>
+                        <p>Track likes, comments, shares, and engagement rates. Get insights on best-performing content.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h5>Mobile Friendly</h5>
+                        <p>Manage your posts on the go with our fully responsive design.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Workflow Section -->
+    <section class="workflow py-5 bg-light">
+        <div class="container-lg">
+            <h2 class="text-center mb-5 fw-bold">Simple Workflow</h2>
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="workflow-steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <h5>Login</h5>
+                            <p>Connect with your Facebook Business account</p>
+                        </div>
+                        <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <h5>Upload</h5>
+                            <p>Share your portfolio & media files</p>
+                        </div>
+                        <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <h5>Create</h5>
+                            <p>Generate or write posts</p>
+                        </div>
+                        <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <h5>Schedule</h5>
+                            <p>Set posting time or post instantly</p>
+                        </div>
+                        <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+                        <div class="step">
+                            <div class="step-number">5</div>
+                            <h5>Track</h5>
+                            <p>Monitor engagement & analytics</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta py-5">
+        <div class="container-lg text-center">
+            <h2 class="mb-4">Ready to Transform Your Social Media Strategy?</h2>
+            <p class="lead mb-4">Join hundreds of businesses already using Socials to manage their Facebook presence.</p>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">
+                <i class="fab fa-facebook"></i> Login with Facebook Business Account
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5">
+        <div class="container-lg">
+            <div class="row">
+                <div class="col-md-4">
+                    <h6>About Socials</h6>
+                    <p>A powerful tool designed for business users to manage their Facebook presence with ease.</p>
+                </div>
+                <div class="col-md-4">
+                    <h6>Features</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white-50 text-decoration-none">Portfolio Upload</a></li>
+                        <li><a href="#" class="text-white-50 text-decoration-none">AI Posts</a></li>
+                        <li><a href="#" class="text-white-50 text-decoration-none">Analytics</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6>Legal</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white-50 text-decoration-none">Privacy Policy</a></li>
+                        <li><a href="#" class="text-white-50 text-decoration-none">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="bg-white-50">
+            <div class="text-center text-white-50">
+                <p>&copy; 2025 Socials. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<style>
+.landing-page {
+    overflow-x: hidden;
+}
+
+.navbar {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.hero {
+    padding: 100px 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.hero .feature-graphic {
+    font-size: 150px;
+    text-align: center;
+    opacity: 0.2;
+}
+
+.features {
+    padding: 80px 0;
+}
+
+.feature-card {
+    padding: 30px;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.feature-card:hover {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transform: translateY(-5px);
+}
+
+.feature-icon {
+    font-size: 50px;
+    color: #667eea;
+    margin-bottom: 20px;
+}
+
+.workflow-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.step {
+    text-align: center;
+    flex: 1;
+    min-width: 100px;
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 20px;
+    margin: 0 auto 15px;
+}
+
+.step-arrow {
+    color: #667eea;
+    font-size: 24px;
+    margin: 0 10px;
+}
+
+.cta {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+</style>
+{% endblock %}

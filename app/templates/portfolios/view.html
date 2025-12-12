@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Portfolio - Socials{% endblock %}
+
+{% block content %}
+<div class="portfolio-view-container p-4">
+    <a href="{{ url_for('portfolios.index') }}" class="btn btn-outline-primary mb-4">← Back to Portfolios</a>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">{{ portfolio.title or portfolio.filename }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="portfolio-details mb-4">
+                        <p><strong>File Type:</strong> {{ portfolio.file_type.upper() }}</p>
+                        <p><strong>File Size:</strong> {{ (portfolio.file_size / 1024 / 1024)|round(2) }} MB</p>
+                        <p><strong>Status:</strong> <span class="badge bg-{{ 'success' if portfolio.is_processed else 'warning' }}">{{ portfolio.status.title() }}</span></p>
+                        {% if portfolio.description %}
+                        <p><strong>Description:</strong> {{ portfolio.description }}</p>
+                        {% endif %}
+                    </div>
+
+                    {% if portfolio.extracted_text %}
+                    <div class="extracted-content">
+                        <h6>Extracted Content</h6>
+                        <div class="text-preview">
+                            {{ portfolio.extracted_text[:500] }}...
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    {% if not portfolio.is_processed %}
+                    <button class="btn btn-primary w-100 mb-2" onclick="generatePosts({{ portfolio.id }})">
+                        <i class="fas fa-magic"></i> Generate AI Posts
+                    </button>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> Posts generated ({{ portfolio.ai_posts_generated }})
+                    </div>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('posts.index', status='pending') }}" class="btn btn-outline-primary w-100 mb-2">
+                        View Pending Posts
+                    </a>
+                    
+                    <button class="btn btn-outline-danger w-100" onclick="deletePortfolio()">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+
+            {% if ai_posts %}
+            <div class="card mt-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">Generated Posts ({{ ai_posts|length }})</h5>
+                </div>
+                <div class="card-body">
+                    {% for post in ai_posts %}
+                    <div class="generated-post mb-3 pb-3 border-bottom">
+                        <p class="small">{{ post.content[:100] }}...</p>
+                        <a href="{{ url_for('posts.view', post_id=post.id) }}" class="btn btn-xs btn-primary btn-sm">View</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function generatePosts(portfolioId) {
+    if (confirm('Generate AI posts from this portfolio?')) {
+        fetch(`/portfolios/${portfolioId}/generate-posts`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({num_posts: 3})
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                alert(`${d.posts_generated} posts generated!`);
+                location.reload();
+            }
+        });
+    }
+}
+
+function deletePortfolio() {
+    if (confirm('Delete this portfolio?')) {
+        fetch(`/portfolios/{{ portfolio.id }}/delete`, {method: 'POST'})
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) location.href = '{{ url_for("portfolios.index") }}';
+            });
+    }
+}
+</script>
+
+<style>
+.portfolio-details {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.text-preview {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    line-height: 1.6;
+}
+</style>
+{% endblock %}

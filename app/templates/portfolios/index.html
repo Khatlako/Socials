@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Portfolios - Socials{% endblock %}
+
+{% block content %}
+<div class="portfolios-container p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Portfolio Management</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadPortfolioModal">
+            <i class="fas fa-file-upload"></i> Upload Portfolio
+        </button>
+    </div>
+
+    <div class="row">
+        {% if portfolios.items %}
+            {% for portfolio in portfolios.items %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="portfolio-card">
+                    <div class="portfolio-icon">
+                        {% if portfolio.file_type == 'pdf' %}
+                        <i class="fas fa-file-pdf"></i>
+                        {% elif portfolio.file_type in ['docx', 'doc'] %}
+                        <i class="fas fa-file-word"></i>
+                        {% elif portfolio.file_type == 'image' %}
+                        <i class="fas fa-file-image"></i>
+                        {% else %}
+                        <i class="fas fa-file"></i>
+                        {% endif %}
+                    </div>
+                    <div class="portfolio-info">
+                        <h6>{{ portfolio.title or portfolio.filename }}</h6>
+                        <small class="text-muted">{{ portfolio.file_type.upper() }} • {{ (portfolio.file_size / 1024 / 1024)|round(2) }} MB</small>
+                        <div class="mt-2">
+                            <span class="badge bg-{{ 'success' if portfolio.is_processed else 'warning' }}">
+                                {{ 'Processed' if portfolio.is_processed else 'Pending' }}
+                            </span>
+                        </div>
+                        <div class="mt-3">
+                            <a href="{{ url_for('portfolios.view', portfolio_id=portfolio.id) }}" class="btn btn-sm btn-primary">View</a>
+                            <button class="btn btn-sm btn-outline-primary" onclick="generatePosts({{ portfolio.id }})">Generate Posts</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-inbox"></i> No portfolios uploaded yet.
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadPortfolioModal">Upload One</button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Upload Portfolio Modal -->
+<div class="modal fade" id="uploadPortfolioModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload Portfolio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-area" id="portfolioUploadArea">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag files here or click to upload</p>
+                    <small>Support: PDF, DOCX, DOC, TXT, PNG, JPG</small>
+                    <input type="file" id="portfolioFile" hidden accept=".pdf,.docx,.doc,.txt,.jpg,.jpeg,.png">
+                </div>
+                <div class="mt-3">
+                    <input type="text" class="form-control" id="portfolioTitle" placeholder="Portfolio title">
+                </div>
+                <div class="mt-2">
+                    <textarea class="form-control" id="portfolioDescription" placeholder="Description" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="uploadPortfolio()">Upload</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const portfolioUploadArea = document.getElementById('portfolioUploadArea');
+portfolioUploadArea.addEventListener('click', () => document.getElementById('portfolioFile').click());
+portfolioUploadArea.addEventListener('dragover', e => {
+    e.preventDefault();
+    portfolioUploadArea.style.background = '#f0f4ff';
+});
+portfolioUploadArea.addEventListener('dragleave', () => {
+    portfolioUploadArea.style.background = '';
+});
+portfolioUploadArea.addEventListener('drop', e => {
+    e.preventDefault();
+    document.getElementById('portfolioFile').files = e.dataTransfer.files;
+});
+
+function uploadPortfolio() {
+    const file = document.getElementById('portfolioFile').files[0];
+    if (!file) return alert('Please select a file');
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', document.getElementById('portfolioTitle').value);
+    formData.append('description', document.getElementById('portfolioDescription').value);
+
+    fetch('{{ url_for("portfolios.upload") }}', {method: 'POST', body: formData})
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                alert('Portfolio uploaded successfully');
+                location.reload();
+            }
+        });
+}
+
+function generatePosts(portfolioId) {
+    if (confirm('Generate AI posts from this portfolio?')) {
+        fetch(`/portfolios/${portfolioId}/generate-posts`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({num_posts: 3})
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                alert(`${d.posts_generated} posts generated and added to pending queue`);
+                location.reload();
+            }
+        });
+    }
+}
+</script>
+
+<style>
+.portfolio-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.portfolio-card:hover {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transform: translateY(-5px);
+}
+
+.portfolio-icon {
+    font-size: 48px;
+    color: #667eea;
+    margin-bottom: 15px;
+}
+
+.portfolio-info h6 {
+    margin-bottom: 5px;
+}
+
+.upload-area {
+    border: 2px dashed #667eea;
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    background: #f0f4ff;
+}
+
+.upload-area i {
+    font-size: 48px;
+    color: #667eea;
+    margin-bottom: 15px;
+    display: block;
+}
+</style>
+{% endblock %}
