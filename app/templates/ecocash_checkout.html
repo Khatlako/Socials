@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - {{ plan.display_name }} Plan{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow">
+                <div class="card-body p-4">
+                    <h1 class="h3 mb-4">Subscribe to {{ plan.display_name }} Plan</h1>
+                    
+                    <!-- Plan Summary -->
+                    <div class="alert alert-light border mb-4">
+                        <h5>{{ plan.display_name }} Plan</h5>
+                        <p class="text-muted mb-2">{{ plan.description }}</p>
+                        
+                        <div class="d-grid gap-2 mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Monthly Price:</span>
+                                <strong class="text-primary">ZWL {{ "%.2f"|format(plan.monthly_price) }}</strong>
+                            </div>
+                            {% if plan.annual_price %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Annual Price:</span>
+                                <strong class="text-success">ZWL {{ "%.2f"|format(plan.annual_price) }}</strong>
+                                {% if plan.annual_discount_percent %}
+                                <small class="badge bg-success">{{ plan.annual_discount_percent }}% off</small>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if plan.trial_days > 0 %}
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>{{ plan.trial_days }}-Day Free Trial!</strong> No charge for the first {{ plan.trial_days }} days.
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Checkout Form -->
+                    <form method="POST" class="needs-validation">
+                        <!-- Billing Interval -->
+                        <div class="mb-4">
+                            <label class="form-label"><strong>Billing Period</strong></label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="billing_interval" id="monthly" value="monthly" checked>
+                                <label class="btn btn-outline-primary" for="monthly">
+                                    Monthly
+                                    <br>
+                                    <small>ZWL {{ "%.2f"|format(plan.monthly_price) }}/month</small>
+                                </label>
+                                
+                                {% if plan.annual_price %}
+                                <input type="radio" class="btn-check" name="billing_interval" id="annual" value="annual">
+                                <label class="btn btn-outline-primary" for="annual">
+                                    Annual
+                                    <br>
+                                    <small>ZWL {{ "%.2f"|format(plan.annual_price) }}/year</small>
+                                </label>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Phone Number -->
+                        <div class="mb-4">
+                            <label for="phone_number" class="form-label"><strong>Phone Number for USSD Push</strong></label>
+                            <input 
+                                type="tel" 
+                                class="form-control form-control-lg" 
+                                id="phone_number" 
+                                name="phone_number" 
+                                placeholder="+263 77 123 4567 or 0777123456"
+                                pattern="^\+?[0-9\s\-]{10,20}$"
+                                required
+                            >
+                            <small class="text-muted d-block mt-2">
+                                <i class="fas fa-phone"></i> We'll send a payment prompt to this number via USSD.
+                                Confirm it on your phone to complete payment.
+                            </small>
+                        </div>
+                        
+                        <!-- Payment Info -->
+                        <div class="alert alert-light border mb-4">
+                            <h6 class="mb-3">How Ecocash USSD Works:</h6>
+                            <ol class="mb-0 ps-3">
+                                <li>Enter your phone number above</li>
+                                <li>Click "Pay with Ecocash"</li>
+                                <li>A payment prompt appears on your phone</li>
+                                <li>Confirm the amount and enter your PIN</li>
+                                <li>Payment is processed and your subscription activates</li>
+                            </ol>
+                        </div>
+                        
+                        <!-- Terms -->
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="/terms" target="_blank">Terms of Service</a> and 
+                                <a href="/privacy" target="_blank">Privacy Policy</a>
+                            </label>
+                        </div>
+                        
+                        <!-- Submit -->
+                        <button type="submit" class="btn btn-success btn-lg w-100 mb-2">
+                            <i class="fas fa-mobile-alt"></i> Pay with Ecocash
+                        </button>
+                        
+                        <!-- Back Link -->
+                        <a href="{{ url_for('billing.pricing') }}" class="btn btn-outline-secondary w-100">
+                            Back to Pricing
+                        </a>
+                    </form>
+                    
+                    <!-- Security Notice -->
+                    <div class="alert alert-info mt-4 mb-0">
+                        <i class="fas fa-lock"></i> <strong>Secure Payment</strong> - Your payment information is processed securely by Ecocash.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.btn-group label {
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-group label:hover {
+    background-color: #f0f0f0;
+}
+
+.btn-check:checked + label {
+    background-color: #198754;
+    border-color: #198754;
+    color: white;
+}
+</style>
+{% endblock %}

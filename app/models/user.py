@@ -33,6 +33,14 @@ class User(UserMixin, db.Model):
     notification_enabled = db.Column(db.Boolean, default=True)
     ai_enabled = db.Column(db.Boolean, default=True)
     
+    # Subscription & Billing
+    plan_id = db.Column(db.Integer, db.ForeignKey('plans.id'))  # Current plan
+    ecocash_phone_number = db.Column(db.String(20))  # Primary Ecocash phone for subscriptions
+    current_subscription_id = db.Column(db.Integer, db.ForeignKey('subscriptions.id'))  # Active subscription
+    subscription_status = db.Column(db.String(50), default='none')  # none, trialing, active, past_due, canceled
+    subscription_ends_at = db.Column(db.DateTime)  # When current subscription ends
+    billing_email = db.Column(db.String(255))  # May differ from login email
+    
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -41,9 +49,13 @@ class User(UserMixin, db.Model):
     # Relationships
     portfolios = db.relationship('Portfolio', backref='owner', lazy='dynamic', cascade='all, delete-orphan')
     media = db.relationship('Media', backref='owner', lazy='dynamic', cascade='all, delete-orphan')
-    posts = db.relationship('Post', backref='creator', lazy='dynamic', cascade='all, delete-orphan')
+    posts = db.relationship('Post', backref='creator', lazy='dynamic', cascade='all, delete-orphan', foreign_keys='Post.user_id')
     scheduled_posts = db.relationship('ScheduledPost', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     analytics = db.relationship('PostAnalytics', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    
+    # Subscription relationships
+    plan = db.relationship('Plan', backref='users')
+    current_subscription = db.relationship('Subscription', foreign_keys=[current_subscription_id], uselist=False)
     
     def __repr__(self):
         return f'<User {self.email}>'
@@ -57,6 +69,32 @@ class User(UserMixin, db.Model):
     def get_id(self):
         """Override for Flask-Login"""
         return str(self.id)
+    
+    def get_current_plan(self):
+        """Get user's current plan (default to Free if none)"""
+        if self.current_subscription and self.current_subscription.is_active():
+            return self.current_subscription.plan
+        # Return Free plan
+        from app.models.plan import Plan
+        return Plan.query.filter_by(name='free').first()
+    
+    def has_feature(self, feature_name):
+        """Check if user's current plan has a feature"""
+        plan = self.get_current_plan()
+        if plan:
+            return plan.get_feature(feature_name)
+        return None
+    
+    def is_on_free_plan(self):
+        """Check if user is on free plan"""
+        plan = self.get_current_plan()
+        return plan and plan.name == 'free'
+    
+    def is_paid_subscriber(self):
+        """Check if user has active paid subscription"""
+        if self.current_subscription:
+            return self.current_subscription.is_active() and self.current_subscription.plan.name != 'free'
+        return False
 
 @login_manager.user_loader
 def load_user(user_id):

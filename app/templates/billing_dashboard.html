@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}Billing & Subscription{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 class="mb-4">Billing & Subscription</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Current Plan Section -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Current Plan</h5>
+                </div>
+                <div class="card-body">
+                    {% if current_subscription %}
+                        <!-- Active Subscription -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6>Plan Name</h6>
+                                <p class="h4">{{ current_subscription.plan.display_name }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Status</h6>
+                                <p>
+                                    {% if current_subscription.is_active() %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% elif current_subscription.is_trialing() %}
+                                        <span class="badge bg-info">Trialing</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">{{ current_subscription.status }}</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6>Billing Interval</h6>
+                                <p class="text-capitalize">{{ current_subscription.billing_interval }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Next Billing Date</h6>
+                                <p>{{ current_subscription.current_period_end.strftime('%B %d, %Y') }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Trial Info -->
+                        {% if current_subscription.is_trialing() %}
+                        <div class="alert alert-info" role="alert">
+                            <strong>Your trial ends on {{ current_subscription.trial_end.strftime('%B %d, %Y') }}</strong>
+                            ({{ current_subscription.trial_days_remaining }} days remaining)
+                        </div>
+                        {% endif %}
+
+                        <!-- Plan Features -->
+                        <h6 class="mt-4 mb-3">Plan Features</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li><i class="bi bi-check-circle text-success"></i> {{ current_subscription.plan.features.pages }} Facebook page{{ 's' if current_subscription.plan.features.pages != 1 else '' }}</li>
+                                    <li><i class="bi bi-check-circle text-success"></i> {{ current_subscription.plan.features.posts_per_month }} posts/month</li>
+                                    <li><i class="bi bi-check-circle text-success"></i> {{ current_subscription.plan.features.scheduled_posts }} scheduled posts</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li><i class="bi bi-check-circle text-success"></i> {{ current_subscription.plan.features.team_members }} team member{{ 's' if current_subscription.plan.features.team_members != 1 else '' }}</li>
+                                    <li><i class="bi bi-check-circle text-success"></i> {{ current_subscription.plan.features.analytics_history_days }}-day analytics history</li>
+                                    <li>
+                                        {% if current_subscription.plan.features.ai_captions_per_month > 0 %}
+                                        <i class="bi bi-check-circle text-success"></i> {{ current_subscription.plan.features.ai_captions_per_month }} AI captions/month
+                                        {% else %}
+                                        <i class="bi bi-x-circle text-danger"></i> AI captions
+                                        {% endif %}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="mt-4 d-flex gap-2">
+                            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changePlanModal">
+                                Change Plan
+                            </button>
+                            <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                                Cancel Subscription
+                            </button>
+                        </div>
+                    {% else %}
+                        <!-- No Subscription -->
+                        <div class="alert alert-info" role="alert">
+                            You're currently on the <strong>Free</strong> plan. Upgrade to unlock premium features.
+                        </div>
+                        <a href="{{ url_for('billing.pricing') }}" class="btn btn-primary">View Pricing Plans</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Payment Methods Section -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Payment Methods</h5>
+                    <a href="{{ url_for('billing.add_payment_method') }}" class="btn btn-sm btn-light">
+                        <i class="bi bi-plus"></i> Add Payment Method
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if payment_methods %}
+                        <div class="list-group">
+                            {% for pm in payment_methods %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">
+                                        {% if pm.type == 'card' %}
+                                        <i class="bi bi-credit-card"></i> {{ pm.display_name() }}
+                                        {% else %}
+                                        <i class="bi bi-bank"></i> {{ pm.display_name() }}
+                                        {% endif %}
+                                    </h6>
+                                    <small class="text-muted">Added {{ pm.created_at.strftime('%B %d, %Y') }}</small>
+                                </div>
+                                <div>
+                                    {% if pm.is_default %}
+                                    <span class="badge bg-success">Default</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No payment methods saved yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Invoices Section -->
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Invoices</h5>
+                    <a href="{{ url_for('billing.invoices') }}" class="btn btn-sm btn-light">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if invoices %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Invoice</th>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for invoice in invoices[:5] %}
+                                    <tr>
+                                        <td><strong>{{ invoice.invoice_number }}</strong></td>
+                                        <td>{{ invoice.issued_date.strftime('%b %d, %Y') if invoice.issued_date else 'N/A' }}</td>
+                                        <td>${{ "%.2f"|format(invoice.amount_due / 100) }}</td>
+                                        <td>
+                                            {% if invoice.is_paid() %}
+                                            <span class="badge bg-success">Paid</span>
+                                            {% elif invoice.is_overdue() %}
+                                            <span class="badge bg-danger">Overdue</span>
+                                            {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('billing.view_invoice', invoice_id=invoice.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-file-pdf"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No invoices yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Upgrade Card -->
+            {% if current_user.is_on_free_plan() %}
+            <div class="card bg-light border-primary mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Ready to Upgrade?</h5>
+                    <p class="card-text">Unlock advanced features like more pages, AI captions, and detailed analytics.</p>
+                    <a href="{{ url_for('billing.pricing') }}" class="btn btn-primary w-100">See Plans</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Support Card -->
+            <div class="card bg-light mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Need Help?</h5>
+                    <p class="card-text small">Contact our support team for billing questions and assistance.</p>
+                    <a href="mailto:support@example.com" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="bi bi-envelope"></i> Email Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Plan Modal -->
+<div class="modal fade" id="changePlanModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Plan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Select a new plan to upgrade or downgrade:</p>
+                <div class="list-group">
+                    {% for plan in available_plans %}
+                    {% if current_subscription.plan_id != plan.id %}
+                    <form method="POST" action="{{ url_for('billing.upgrade_plan', plan_id=plan.id) }}" style="display: inline;">
+                        <button type="submit" class="list-group-item list-group-item-action">
+                            <h6 class="mb-1">{{ plan.display_name }}</h6>
+                            <small class="text-muted">${{ plan.monthly_price }}/month</small>
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Subscription Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Subscription</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('billing.cancel_subscription') }}">
+                <div class="modal-body">
+                    <p class="mb-3">We're sorry to see you go. Before you cancel, please tell us why:</p>
+                    <select name="reason" class="form-select mb-3" required>
+                        <option value="">Select a reason...</option>
+                        <option value="too_expensive">Too expensive</option>
+                        <option value="missing_features">Missing features</option>
+                        <option value="poor_performance">Poor performance</option>
+                        <option value="switching_platforms">Switching to another platform</option>
+                        <option value="no_longer_needed">No longer needed</option>
+                        <option value="other">Other</option>
+                    </select>
+
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="immediateCancel" value="true" name="immediate">
+                        <label class="form-check-label" for="immediateCancel">
+                            <strong>Cancel immediately</strong> (instead of at end of billing period)
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Subscription</button>
+                    <button type="submit" class="btn btn-danger">Cancel Subscription</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

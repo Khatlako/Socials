@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Ecocash Subscriptions{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">Ecocash Subscriptions</h1>
+            
+            {% if subscriptions %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Plan</th>
+                            <th>Status</th>
+                            <th>Billing Interval</th>
+                            <th>Phone Number</th>
+                            <th>Started</th>
+                            <th>Renews</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subscription in subscriptions %}
+                        <tr>
+                            <td>
+                                <strong>{{ subscription.plan.display_name }}</strong>
+                            </td>
+                            <td>
+                                {% if subscription.status == 'active' %}
+                                <span class="badge bg-success">Active</span>
+                                {% elif subscription.status == 'pending' %}
+                                <span class="badge bg-warning">Pending Confirmation</span>
+                                {% elif subscription.status == 'failed' %}
+                                <span class="badge bg-danger">Failed</span>
+                                {% elif subscription.status == 'canceled' %}
+                                <span class="badge bg-secondary">Canceled</span>
+                                {% else %}
+                                <span class="badge bg-info">{{ subscription.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ subscription.billing_interval|capitalize }}
+                            </td>
+                            <td>
+                                <code>{{ subscription.phone_number }}</code>
+                            </td>
+                            <td>
+                                {% if subscription.current_period_start %}
+                                {{ subscription.current_period_start.strftime('%d %b %Y') }}
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if subscription.current_period_end %}
+                                {{ subscription.current_period_end.strftime('%d %b %Y') }}
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if subscription.status == 'active' %}
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        onclick="cancelSubscription({{ subscription.id }})">
+                                    Cancel
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                You don't have any Ecocash subscriptions yet.
+                <a href="{{ url_for('billing.pricing') }}">Browse plans</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function cancelSubscription(subscriptionId) {
+    if (confirm('Are you sure you want to cancel this subscription?')) {
+        fetch(`/billing/cancel-subscription`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                subscription_id: subscriptionId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

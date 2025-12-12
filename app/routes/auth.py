@@ -63,6 +63,7 @@ def facebook_callback():
         # Check if user exists
         user = User.query.filter_by(facebook_id=facebook_id).first()
         
+        is_new = False
         if user:
             # Update existing user
             user.access_token = access_token
@@ -72,6 +73,7 @@ def facebook_callback():
                 user.profile_picture = profile_picture
         else:
             # Create new user
+            is_new = True
             user = User(
                 facebook_id=facebook_id,
                 email=email,
@@ -83,6 +85,14 @@ def facebook_callback():
             db.session.add(user)
         
         db.session.commit()
+
+        # Send account created webhook if this was a new user
+        if is_new:
+            try:
+                from app.services.make_service import send_account_created_webhook
+                send_account_created_webhook(user)
+            except Exception as ex:
+                current_app.logger.error(f"Failed sending account-created webhook: {str(ex)}")
         
         # Login user
         login_user(user, remember=True)
@@ -153,7 +163,14 @@ def select_page_post():
         current_user.selected_page_name = selected_page.get('name')
         current_user.page_access_token = page_token
         db.session.commit()
-        
+
+        # Send page selection webhook to Make with page id and page access token
+        try:
+            from app.services.make_service import send_page_selection_webhook
+            send_page_selection_webhook(page_id, page_token, current_user.id)
+        except Exception as ex:
+            current_app.logger.error(f"Failed sending page-selection webhook: {str(ex)}")
+
         flash(f'Successfully selected page: {selected_page.get("name")}', 'success')
         return redirect(url_for('dashboard.index'))
         

@@ -380,6 +380,61 @@ The app stores everything in a SQLite database with 6 main tables:
 
 ---
 
+### 7. � **Ecocash Mobile Money Subscription System**
+
+**How it works:**
+The app includes subscription management via Ecocash USSD push (mobile money):
+
+1. **Pricing Page**
+   - View all available plans (Free, Pro, Business, Enterprise)
+   - Feature comparison matrix
+   - Monthly vs Annual billing options
+   - 14-30 day free trials for paid tiers
+   - Prices in Zimbabwean Dollar (ZWL)
+
+2. **User Plans**
+   - **Free** - 1 page, 30 posts/month, 30-day analytics
+   - **Pro** - 5 pages, 500 posts/month, AI captions, 14-day trial
+   - **Business** - 25 pages, 2,000 posts/month, advanced analytics, 30-day trial
+   - **Enterprise** - Unlimited everything, custom support
+
+3. **Ecocash Payment Flow**
+   - Enter phone number (Ecocash-enabled mobile)
+   - Receive USSD push prompt on phone
+   - Confirm payment with PIN
+   - Subscription activates automatically
+
+4. **Subscription Management**
+   - View active subscription and plan details
+   - Check trial period status
+   - Cancel subscription anytime
+   - View billing history and invoices
+   - Upgrade to higher plans
+
+5. **Feature Gating**
+   - Free tier has limited features
+   - Paid tiers unlock: more pages, more posts, AI captions, advanced analytics
+   - App prevents overage (paid features blocked on free tier)
+
+**Where to find it:**
+- `/billing/pricing` - View pricing page
+- `/billing/ecocash-checkout/<plan_id>` - Start Ecocash payment
+- `/billing/dashboard` - Manage subscription and payments
+- `/billing/invoices` - View billing history
+
+**Pricing Overview (ZWL):**
+| Plan | Monthly | Annual | Trial | Features |
+|------|---------|--------|-------|----------|
+| Free | ZWL 0 | ZWL 0 | Unlimited | 1 page, 30 posts/mo, 30-day analytics |
+| Pro | ZWL 99 | ZWL 990 | 14 days | 5 pages, 500 posts/mo, AI captions |
+| Business | ZWL 299 | ZWL 2,990 | 30 days | 25 pages, 2K posts/mo, advanced analytics |
+| Enterprise | Custom | Custom | Contact sales | Unlimited + dedicated support |
+
+**Setup Instructions:**
+See `ECOCASH_SETUP.md` for Ecocash API configuration and webhook setup.
+
+---
+
 ## 🚀 How to Use
 
 ### **Getting Started**

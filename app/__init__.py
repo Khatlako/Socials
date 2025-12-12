@@ -38,6 +38,7 @@ def create_app(config_name='default'):
     from app.routes.portfolios import portfolios_bp
     from app.routes.analytics import analytics_bp
     from app.routes.api import api_bp
+    from app.routes.billing import billing_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -46,6 +47,7 @@ def create_app(config_name='default'):
     app.register_blueprint(portfolios_bp)
     app.register_blueprint(analytics_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(billing_bp)
     
     # Create tables
     with app.app_context():

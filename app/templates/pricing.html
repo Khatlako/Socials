@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}Pricing Plans{% endblock %}
+
+{% block content %}
+<div class="pricing-page py-5">
+    <div class="container">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold mb-3">Simple, Transparent Pricing</h1>
+            <p class="lead text-muted">Choose the perfect plan for your social media management needs</p>
+            
+            <!-- Billing Toggle -->
+            <div class="billing-toggle mt-4">
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="billing_period" id="monthly" value="monthly" checked>
+                    <label class="btn btn-outline-primary" for="monthly">
+                        Monthly Billing
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="billing_period" id="annual" value="annual">
+                    <label class="btn btn-outline-primary" for="annual">
+                        Annual Billing <span class="badge bg-success ms-2">Save 17%</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plans Grid -->
+        <div class="row g-4 mt-5">
+            {% for plan in plans %}
+            <div class="col-md-6 col-lg-3">
+                <div class="pricing-card h-100 {% if plan.name == 'business' %}featured{% endif %} card border-0 shadow-sm">
+                    <!-- Ribbon for Featured -->
+                    {% if plan.name == 'business' %}
+                    <div class="ribbon">Most Popular</div>
+                    {% endif %}
+                    
+                    <div class="card-body d-flex flex-column">
+                        <!-- Plan Name -->
+                        <h3 class="card-title h5 mb-2">{{ plan.display_name }}</h3>
+                        
+                        <!-- Price -->
+                        <div class="price-display mb-4">
+                            <div class="monthly-price" style="display: {% if 'monthly' in request.args.get('period', 'monthly') %}block{% else %}none{% endif %}">
+                                <span class="currency">$</span><span class="amount">{{ "%.0f"|format(plan.monthly_price) }}</span>
+                                <span class="period">/month</span>
+                            </div>
+                            <div class="annual-price" style="display: none;">
+                                <span class="currency">$</span><span class="amount">{{ "%.0f"|format(plan.annual_price) }}</span>
+                                <span class="period">/year</span>
+                                {% if plan.annual_savings() > 0 %}
+                                <div class="savings">Save ${{ "%.0f"|format(plan.annual_savings()) }}/year</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        {% if plan.description %}
+                        <p class="card-text text-muted small mb-4">{{ plan.description }}</p>
+                        {% endif %}
+
+                        <!-- CTA Button -->
+                        <div class="mb-4">
+                            {% if current_user.is_authenticated and user_plan.id == plan.id %}
+                                <button class="btn btn-secondary w-100" disabled>Current Plan</button>
+                            {% elif plan.name == 'free' %}
+                                <a href="{{ url_for('billing.dashboard') }}" class="btn btn-outline-primary w-100">View Plan</a>
+                            {% elif current_user.is_authenticated %}
+                                <form method="POST" action="{{ url_for('billing.checkout', plan_id=plan.id) }}" style="display:inline;">
+                                    <input type="hidden" name="billing_interval" class="billing-interval-input" value="monthly">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        {% if current_user.current_subscription %}Upgrade{% else %}Get Started{% endif %}
+                                    </button>
+                                </form>
+                            {% else %}
+                                <a href="{{ url_for('auth.login') }}" class="btn btn-primary w-100">Sign Up</a>
+                            {% endif %}
+                        </div>
+
+                        <!-- Trial Info -->
+                        {% if plan.trial_days > 0 %}
+                        <div class="alert alert-info alert-sm mb-4" role="alert">
+                            <small><strong>{{ plan.trial_days }}-day free trial</strong> • No credit card required</small>
+                        </div>
+                        {% endif %}
+
+                        <!-- Feature List -->
+                        <ul class="list-unstyled feature-list flex-grow-1">
+                            <li><i class="bi bi-check-circle-fill text-success"></i> {{ plan.features.pages }} page{{ 's' if plan.features.pages != 1 else '' }}</li>
+                            <li><i class="bi bi-check-circle-fill text-success"></i> {{ plan.features.team_members }} team member{{ 's' if plan.features.team_members != 1 else '' }}</li>
+                            <li><i class="bi bi-check-circle-fill text-success"></i> {{ plan.features.posts_per_month }} posts/month</li>
+                            <li><i class="bi bi-check-circle-fill text-success"></i> {{ plan.features.analytics_history_days }}-day analytics</li>
+                            
+                            {% if plan.features.ai_captions_per_month > 0 %}
+                            <li><i class="bi bi-check-circle-fill text-success"></i> {{ plan.features.ai_captions_per_month }} AI captions/month</li>
+                            {% else %}
+                            <li class="text-muted"><i class="bi bi-x-circle"></i> AI captions</li>
+                            {% endif %}
+                            
+                            {% if plan.features.export_reports %}
+                            <li><i class="bi bi-check-circle-fill text-success"></i> Export reports</li>
+                            {% else %}
+                            <li class="text-muted"><i class="bi bi-x-circle"></i> Export reports</li>
+                            {% endif %}
+                            
+                            {% if plan.features.competitor_analysis %}
+                            <li><i class="bi bi-check-circle-fill text-success"></i> Competitor analysis</li>
+                            {% else %}
+                            <li class="text-muted"><i class="bi bi-x-circle"></i> Competitor analysis</li>
+                            {% endif %}
+                            
+                            {% if plan.features.api_access %}
+                            <li><i class="bi bi-check-circle-fill text-success"></i> API access</li>
+                            {% else %}
+                            <li class="text-muted"><i class="bi bi-x-circle"></i> API access</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="row mt-5 pt-5">
+            <div class="col-lg-8 offset-lg-2">
+                <h2 class="text-center mb-4">Frequently Asked Questions</h2>
+                
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                Can I change plans anytime?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Yes! You can upgrade immediately or downgrade at the end of your billing cycle. Changes take effect on your next billing date.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                What payment methods do you accept?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                We accept all major credit and debit cards (Visa, Mastercard, American Express) via Stripe, our trusted payment processor.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                Do you offer refunds?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                If you're not satisfied within the first 14 days, we offer a full refund. After that, you can cancel anytime with no penalties.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                What about enterprise needs?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                We offer custom Enterprise plans with unlimited everything, dedicated account management, and custom integrations. <a href="mailto:sales@example.com">Contact our sales team</a>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.pricing-page {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+}
+
+.pricing-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.pricing-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+}
+
+.pricing-card.featured {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.pricing-card.featured .card-title,
+.pricing-card.featured .card-text {
+    color: white;
+}
+
+.pricing-card.featured .btn-primary {
+    background-color: white;
+    color: #667eea;
+    border: none;
+}
+
+.pricing-card.featured .btn-primary:hover {
+    background-color: #f0f0f0;
+}
+
+.ribbon {
+    position: absolute;
+    top: 20px;
+    right: -35px;
+    padding: 10px 40px;
+    background: #28a745;
+    color: white;
+    transform: rotate(45deg);
+    font-weight: bold;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.price-display {
+    font-size: 2.5rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+.price-display .currency {
+    font-size: 1.5rem;
+    vertical-align: super;
+}
+
+.price-display .period {
+    font-size: 0.9rem;
+    color: #999;
+    font-weight: normal;
+}
+
+.savings {
+    font-size: 0.9rem;
+    color: #28a745;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.feature-list li {
+    padding: 8px 0;
+    font-size: 0.9rem;
+}
+
+.feature-list i {
+    margin-right: 8px;
+}
+
+.billing-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle between monthly and annual pricing
+    const monthlyBtn = document.getElementById('monthly');
+    const annualBtn = document.getElementById('annual');
+    
+    [monthlyBtn, annualBtn].forEach(btn => {
+        btn.addEventListener('change', function() {
+            document.querySelectorAll('.monthly-price').forEach(el => {
+                el.style.display = this.value === 'monthly' ? 'block' : 'none';
+            });
+            document.querySelectorAll('.annual-price').forEach(el => {
+                el.style.display = this.value === 'annual' ? 'block' : 'none';
+            });
+            document.querySelectorAll('.billing-interval-input').forEach(el => {
+                el.value = this.value;
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
